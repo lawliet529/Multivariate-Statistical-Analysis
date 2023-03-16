@@ -1,47 +1,61 @@
-# Tuần 3: Ellipsoid #
+# Tuần 4: Ôn tập #
 
-library(ellipse)
+# Cho bộ dữ liệu “Boston” gồm 506 quan sát của 14 biến liên quan đến giá nhà ở
+# ngoại ô Boston trong gói lệnh MASS.
+
+# a. Tính kỳ vọng mẫu, ma trận hiệp phương sai và ma trận tương quan mẫu giữa
+#    14 biến. Dựa vào kết quả thu được, hãy cho biết hai biến nào có mối tương
+#    quan chặt chẽ nhất.
+
+# install.packages("MASS")
 library(MASS)
-library(mnormt)
 
-## Bài 1 ##
+data <- Boston
+head(data)
 
-x <- rnorm(1200, 165, 21.2)
-y <- rnorm(1200, 175, 25.2)
-data <- data.frame(x, y)
-S <- cov(data)
-cm <- colMeans(data)
+colMeans(data)
+cov(data)
 
-plot(ellipse(S, centre = cm))
+cor = cor(data)
+cor
 
-## Bài 2 ##
+diag(cor) = 0
+max(abs(cor))
 
-S <- matrix(c(1, 0, 0, 1), nrow = 2)
-cm <- c(21.2, 25.5)
-X <- mvrnorm(1000, cm, S)
+which(cor == max(abs(cor)), arr.ind = T)
 
-shapiro.test(X[, 1])
-# 	Shapiro-Wilk normality test
-#
-# data:  X[, 1]
-# W = 0.99855, p-value = 0.5905
+# b. Tìm giá trị riêng và vecto riêng của ma trận tương quan mẫu.
 
-shapiro.test(X[, 2])
-# 	Shapiro-Wilk normality test
-#
-# data:  X[, 2]
-# W = 0.99822, p-value = 0.3872
+eigen(cor)
 
-# p-value > 0.05
-# => X có phân bố chuẩn
+# c. Kiểm định xem từng biến có tuân theo phân phối chuẩn một chiều không?
 
-## Bài 3 ##
+sapply(data, shapiro.test)
 
-x <- seq(-10, 10, 0.1)
-y <- seq(-10, 30, 0.2)
-mu <- c(0, 0)
-sigma <- matrix(c(1, 0, 0, 1), nrow = 2)
-f <- function(x, y) dmnorm(cbind(x, y), mu, sigma)
-z <- outer(x, y, f)
+# d. “Khoảng cách” có tuân theo phân phối Khi-bình phương không?
 
-contour(x, y, z)
+m = mahalanobis(data, colMeans(data), cov(data))
+chisq.test(m)
+
+# e. Vecto ngẫu nhiên gồm 14 biến của bộ dữ liệu “Boston” có tuân theo phân
+#    phối chuẩn 14-chiều không?
+
+# Không, do cả 14 biến đều không tuân theo pp chuẩn 1 chiều.
+
+# f. Vẽ biểu đồ thể hiện rõ vị trí tọa độ các điểm và các đường mức tương ứng
+#    của vecto ngẫu nhiên 2-chiều gồm hai biến rm – số phòng trung bình trong
+#    mỗi căn hộ và dis – khoảng cách trung bình đến năm trung tâm làm việc tại
+#    Boston.
+
+# install.packages("KernSmooth")
+library(KernSmooth)
+
+data1 <- data[c('rm', 'dis')]
+
+datad <- bkde2D(data1, bandwidth = c(dpik(data1$rm), dpik(data1$dis)))
+plot(data1)
+contour(x = datad$x1, y = datad$x2, z = datad$fhat, add = TRUE)
+
+# g. Vẽ biểu đồ thể hiện rõ hàm mật độ hai chiều của hai biến rm và dis.
+
+persp(x = datad$x1, y = datad$x2, z = datad$fhat, xlab = "rm", ylab = "dis", zlab = "density")
